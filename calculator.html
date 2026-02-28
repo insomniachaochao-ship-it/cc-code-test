@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>计算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .calculator {
+            background: #2b2b2b;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            width: 340px;
+        }
+
+        .display {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: right;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .expression {
+            color: #888;
+            font-size: 14px;
+            min-height: 20px;
+            margin-bottom: 5px;
+        }
+
+        .result {
+            color: #fff;
+            font-size: 40px;
+            font-weight: bold;
+            word-break: break-all;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            border: none;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 18px;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .btn-number {
+            background: #4a4a4a;
+            color: #fff;
+        }
+
+        .btn-operator {
+            background: #7bed9f;
+            color: #2d3436;
+        }
+
+        .btn-function {
+            background: #70a1ff;
+            color: #fff;
+        }
+
+        .btn-clear {
+            background: #ff6b6b;
+            color: #fff;
+        }
+
+        .btn-backspace {
+            background: #ffa502;
+            color: #fff;
+        }
+
+        .btn-equals {
+            background: #2ed573;
+            color: #fff;
+        }
+
+        .btn-zero {
+            grid-column: span 2;
+        }
+
+        .history {
+            margin-top: 15px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 15px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .history-title {
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .history-item {
+            color: #ccc;
+            font-size: 13px;
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="display">
+            <div class="expression" id="expression"></div>
+            <div class="result" id="result">0</div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn-clear" onclick="clearAll()">C</button>
+            <button class="btn-backspace" onclick="backspace()">⌫</button>
+            <button class="btn-function" onclick="appendInput('%')">%</button>
+            <button class="btn-operator" onclick="appendInput('/')">÷</button>
+
+            <button class="btn-number" onclick="appendInput('7')">7</button>
+            <button class="btn-number" onclick="appendInput('8')">8</button>
+            <button class="btn-number" onclick="appendInput('9')">9</button>
+            <button class="btn-operator" onclick="appendInput('*')">×</button>
+
+            <button class="btn-number" onclick="appendInput('4')">4</button>
+            <button class="btn-number" onclick="appendInput('5')">5</button>
+            <button class="btn-number" onclick="appendInput('6')">6</button>
+            <button class="btn-operator" onclick="appendInput('-')">−</button>
+
+            <button class="btn-number" onclick="appendInput('1')">1</button>
+            <button class="btn-number" onclick="appendInput('2')">2</button>
+            <button class="btn-number" onclick="appendInput('3')">3</button>
+            <button class="btn-operator" onclick="appendInput('+')">+</button>
+
+            <button class="btn-function" onclick="sqrt()">√</button>
+            <button class="btn-number" onclick="appendInput('0')">0</button>
+            <button class="btn-number" onclick="appendInput('.')">.</button>
+            <button class="btn-equals" onclick="calculate()">=</button>
+
+            <button class="btn-function" onclick="appendInput('**')">^</button>
+            <button class="btn-function" onclick="appendInput('(')">(</button>
+            <button class="btn-function" onclick="appendInput(')')">)</button>
+            <button class="btn-function" onclick="toggleSign()">±</button>
+        </div>
+
+        <div class="history">
+            <div class="history-title">历史记录</div>
+            <div id="history-list"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentInput = '';
+        let newInput = true;
+        let history = [];
+
+        function updateDisplay() {
+            document.getElementById('result').textContent = currentInput || '0';
+        }
+
+        function appendInput(value) {
+            if (newInput && /[0-9]/.test(value)) {
+                currentInput = value;
+                newInput = false;
+            } else {
+                currentInput += value;
+                newInput = false;
+            }
+            updateDisplay();
+        }
+
+        function clearAll() {
+            currentInput = '';
+            document.getElementById('expression').textContent = '';
+            updateDisplay();
+            newInput = true;
+        }
+
+        function backspace() {
+            currentInput = currentInput.slice(0, -1);
+            updateDisplay();
+        }
+
+        function toggleSign() {
+            if (currentInput.startsWith('-')) {
+                currentInput = currentInput.slice(1);
+            } else {
+                currentInput = '-' + currentInput;
+            }
+            updateDisplay();
+        }
+
+        function sqrt() {
+            try {
+                const value = parseFloat(currentInput);
+                if (value < 0) {
+                    document.getElementById('result').textContent = '错误';
+                    return;
+                }
+                const result = Math.sqrt(value);
+                document.getElementById('expression').textContent = `√(${currentInput})`;
+                currentInput = String(result);
+                updateDisplay();
+                newInput = true;
+            } catch (e) {
+                document.getElementById('result').textContent = '错误';
+            }
+        }
+
+        function calculate() {
+            try {
+                const expression = currentInput
+                    .replace(/×/g, '*')
+                    .replace(/÷/g, '/')
+                    .replace(/−/g, '-');
+                const result = eval(expression);
+                const displayExpression = currentInput + ' =';
+                document.getElementById('expression').textContent = displayExpression;
+
+                addToHistory(currentInput, result);
+
+                currentInput = String(result);
+                updateDisplay();
+                newInput = true;
+            } catch (e) {
+                document.getElementById('result').textContent = '错误';
+                newInput = true;
+            }
+        }
+
+        function addToHistory(expression, result) {
+            history.unshift({ expression, result });
+            if (history.length > 10) history.pop();
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = history.map(item =>
+                `<div class="history-item">${item.expression} = ${item.result}</div>`
+            ).join('');
+        }
+
+        // 键盘支持
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9') appendInput(e.key);
+            else if (e.key === '+') appendInput('+');
+            else if (e.key === '-') appendInput('-');
+            else if (e.key === '*') appendInput('*');
+            else if (e.key === '/') appendInput('/');
+            else if (e.key === '.') appendInput('.');
+            else if (e.key === 'Enter') calculate();
+            else if (e.key === 'Escape') clearAll();
+            else if (e.key === 'Backspace') backspace();
+        });
+    </script>
+</body>
+</html>
